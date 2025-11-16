@@ -8,28 +8,12 @@
         <p class="welcome-text">探索各种竞赛机会，组建团队，展示才华</p>
       </div>
 
-      <!-- 快速统计 -->
-      <div class="stats-grid">
-        <div class="stat-card card-shadow">
-          <div class="stat-icon">
-            <el-icon size="40"><Trophy /></el-icon>
-          </div>
-          <div class="stat-content">
-            <h3>{{ stats.totalCompetitions }}</h3>
-            <p>竞赛总数</p>
-          </div>
-        </div>
-
-  
-        <div class="stat-card card-shadow">
-          <div class="stat-icon">
-            <el-icon size="40"><UserFilled /></el-icon>
-          </div>
-          <div class="stat-content">
-            <h3>{{ stats.totalTeams }}</h3>
-            <p>团队总数</p>
-          </div>
-        </div>
+      <!-- 查看所有竞赛按钮 -->
+      <div class="view-all-section">
+        <el-button type="primary" size="large" @click="viewAllCompetitions" class="view-all-btn">
+          查看所有竞赛
+          <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+        </el-button>
       </div>
 
       <!-- 最新竞赛 -->
@@ -66,11 +50,13 @@
           </div>
         </div>
 
-        <div class="section-footer">
-          <el-button type="primary" size="large" @click="viewAllCompetitions">
-            查看所有竞赛
-            <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-          </el-button>
+        <!-- 加载更多指示器 -->
+        <div v-if="isLoading" class="loading-indicator">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>正在加载更多竞赛...</span>
+        </div>
+        <div v-if="!hasMore && recentCompetitions.length > 0" class="no-more-indicator">
+          <span>没有更多竞赛了</span>
         </div>
       </section>
     </div>
@@ -80,49 +66,60 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import competitionAPI from '@/api/competition'
-import teamAPI from '@/api/team'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { Loading, ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
-const stats = ref({
-  totalCompetitions: 0,
-  totalTeams: 0
-})
-
 const recentCompetitions = ref([])
+const currentPage = ref(1)
+const isLoading = ref(false)
+const hasMore = ref(true)
 
 onMounted(async () => {
   await loadRecentCompetitions()
-  await loadTeamStats()
+  window.addEventListener('scroll', handleScroll)
 })
 
-const loadRecentCompetitions = async () => {
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
+const loadRecentCompetitions = async (page = 1) => {
+  if (isLoading.value || !hasMore.value) return
+
+  isLoading.value = true
   try {
-    const response = await competitionAPI.getAll()
-    recentCompetitions.value = response.data.slice(0, 6) // 显示最新6个竞赛
-    calculateStats() // 加载完竞赛数据后计算统计
+    const response = await competitionAPI.getAll({ page, limit: 12 })
+    const data = response.data
+
+    if (page === 1) {
+      recentCompetitions.value = data.competitions
+    } else {
+      recentCompetitions.value.push(...data.competitions)
+    }
+
+    hasMore.value = data.hasMore
+    currentPage.value = page
   } catch (error) {
     console.error('加载竞赛失败:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-const calculateStats = () => {
-  stats.value.totalCompetitions = recentCompetitions.value.length
-}
+const handleScroll = () => {
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+  const windowHeight = window.innerHeight
+  const scrollHeight = document.documentElement.scrollHeight
 
-const loadTeamStats = async () => {
-  try {
-    const response = await teamAPI.getStats.count()
-    stats.value.totalTeams = response.data.total
-  } catch (error) {
-    console.error('加载团队统计失败:', error)
-    // 如果API调用失败，设置为0作为默认值
-    stats.value.totalTeams = 0
+  // 当滚动到距离底部100px时加载更多
+  if (scrollTop + windowHeight >= scrollHeight - 100 && hasMore.value && !isLoading.value) {
+    loadRecentCompetitions(currentPage.value + 1)
   }
 }
 
@@ -175,34 +172,23 @@ const getGradeClass = (grade) => {
   opacity: 0.9;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+.view-all-section {
+  text-align: center;
   margin-bottom: 50px;
 }
 
-.stat-card {
-  background: white;
-  padding: 30px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.view-all-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
 }
 
-.stat-icon {
-  color: #667eea;
-}
-
-.stat-content h3 {
-  font-size: 2rem;
-  margin: 0;
-  color: #333;
-}
-
-.stat-content p {
-  margin: 5px 0 0 0;
-  color: #666;
+.view-all-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .recent-section {
@@ -219,9 +205,26 @@ const getGradeClass = (grade) => {
   font-size: 1.8rem;
 }
 
-.section-footer {
+.loading-indicator,
+.no-more-indicator {
   text-align: center;
   margin-top: 30px;
+  padding: 20px;
+  color: #666;
+}
+
+.loading-indicator .el-icon {
+  margin-right: 8px;
+  animation: rotating 2s linear infinite;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .competition-card {

@@ -16,28 +16,11 @@
         >
           <el-menu-item index="/" @click="goHome">首页</el-menu-item>
           <el-menu-item index="/competitions" @click="goToCompetitions">竞赛列表</el-menu-item>
-          <el-menu-item index="/teams" @click="goToTeams">我的团队</el-menu-item>
         </el-menu>
       </nav>
 
       <div class="header-right">
-        <el-dropdown @command="handleCommand">
-          <span class="user-info">
-            <el-avatar :size="32" :icon="UserFilled" />
-            <span class="username">{{ userStore.user?.real_name || userStore.user?.username }}</span>
-            <el-icon class="el-icon--right"><CaretBottom /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-              <el-dropdown-item command="settings">设置</el-dropdown-item>
-              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
         <el-button
-          v-if="userStore.user?.role === 'admin'"
           type="primary"
           size="small"
           @click="goToAdmin"
@@ -67,18 +50,10 @@
       <el-menu :default-active="$route.path" @select="handleMobileMenuSelect">
         <el-menu-item index="/" @click="goHome">首页</el-menu-item>
         <el-menu-item index="/competitions" @click="goToCompetitions">竞赛列表</el-menu-item>
-        <el-menu-item index="/teams" @click="goToTeams">我的团队</el-menu-item>
 
         <el-divider />
 
-        <el-menu-item index="profile">个人资料</el-menu-item>
-        <el-menu-item index="settings">设置</el-menu-item>
-        <el-menu-item index="logout">退出登录</el-menu-item>
-
-        <el-divider v-if="userStore.user?.role === 'admin'" />
-
         <el-button
-          v-if="userStore.user?.role === 'admin'"
           type="primary"
           @click="goToAdmin"
           style="width: 100%; margin-top: 10px;"
@@ -93,12 +68,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessageBox, ElMessage } from 'element-plus'
-import { UserFilled, CaretBottom, Menu } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
+import { Menu } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const userStore = useUserStore()
 
 const mobileMenuVisible = ref(false)
 
@@ -112,51 +84,13 @@ const goToCompetitions = () => {
   mobileMenuVisible.value = false
 }
 
-const goToTeams = () => {
-  router.push('/teams')
-  mobileMenuVisible.value = false
-}
-
 const goToAdmin = () => {
   router.push('/admin')
   mobileMenuVisible.value = false
 }
 
-const handleCommand = async (command) => {
-  switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'settings':
-      ElMessage.info('设置功能开发中')
-      break
-    case 'logout':
-      try {
-        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        userStore.logout()
-        router.push('/login')
-        ElMessage.success('已退出登录')
-      } catch {
-        // 用户取消
-      }
-      break
-  }
-}
-
 const handleMobileMenuSelect = (index) => {
   mobileMenuVisible.value = false
-
-  if (index === 'profile') {
-    handleCommand('profile')
-  } else if (index === 'settings') {
-    handleCommand('settings')
-  } else if (index === 'logout') {
-    handleCommand('logout')
-  }
 }
 </script>
 

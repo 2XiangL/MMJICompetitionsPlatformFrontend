@@ -25,10 +25,30 @@ api.interceptors.response.use(
 )
 
 export default {
-  getAll: () => api.get('/'),
-  getById: (id) => api.get(`/${id}`),
-  search: (query) => api.get('/search', { params: { q: query } }),
-  getTeams: (id, params = {}) => api.get(`/${id}/teams`, { params }),
+  getAll: (params = {}) => {
+    const tempApi = axios.create({
+      baseURL: '/api/competitions'
+    })
+    return tempApi.get('/', { params })
+  },
+  getById: (id) => {
+    const tempApi = axios.create({
+      baseURL: '/api/competitions'
+    })
+    return tempApi.get(`/${id}`)
+  },
+  search: (query) => {
+    const tempApi = axios.create({
+      baseURL: '/api/competitions'
+    })
+    return tempApi.get('/search', { params: { q: query } })
+  },
+  getTeams: (id, params = {}) => {
+    const tempApi = axios.create({
+      baseURL: '/api/competitions'
+    })
+    return tempApi.get(`/${id}/teams`, { params })
+  },
   createTeam: (id, teamData) => {
     const teamAPI = axios.create({
       baseURL: '/api/teams'

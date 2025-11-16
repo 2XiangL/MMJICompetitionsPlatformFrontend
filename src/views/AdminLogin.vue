@@ -44,9 +44,6 @@
           </el-button>
         </el-form-item>
 
-        <div class="login-actions">
-          <el-button type="text" @click="goToUserLogin">用户登录</el-button>
-        </div>
       </el-form>
     </div>
 
@@ -62,10 +59,9 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import axios from 'axios'
 
 const router = useRouter()
-const userStore = useUserStore()
 
 const loginFormRef = ref()
 const loading = ref(false)
@@ -91,7 +87,11 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
 
-    await userStore.adminLogin(loginForm)
+    // 直接调用管理员登录API
+    const response = await axios.post('/api/auth/admin/login', loginForm)
+
+    // 保存token到localStorage
+    localStorage.setItem('adminToken', response.data.token)
 
     ElMessage.success('管理员登录成功')
     router.push('/admin')
@@ -106,9 +106,6 @@ const handleLogin = async () => {
   }
 }
 
-const goToUserLogin = () => {
-  router.push('/login')
-}
 </script>
 
 <style scoped>
@@ -147,11 +144,6 @@ const goToUserLogin = () => {
   font-size: 0.9rem;
 }
 
-.login-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
 
 .footer-info {
   max-width: 400px;

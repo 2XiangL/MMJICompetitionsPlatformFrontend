@@ -344,9 +344,14 @@ const createTeam = async () => {
     await teamFormRef.value.validate()
     creatingTeam.value = true
 
-    await competitionAPI.createTeam(route.params.id, teamForm)
+    const response = await competitionAPI.createTeam(route.params.id, teamForm)
 
-    ElMessage.success('团队创建成功')
+    if (response.data.message.includes('等待管理员审核')) {
+      ElMessage.success('团队创建成功，等待管理员审核后即可显示')
+    } else {
+      ElMessage.success('团队创建成功')
+    }
+
     showCreateTeamDialog.value = false
     Object.assign(teamForm, {
       title: '',
@@ -355,6 +360,7 @@ const createTeam = async () => {
       contact_info: ''
     })
 
+    // 重新加载团队列表
     await loadTeams(currentPage.value)
   } catch (error) {
     if (error.response?.data?.message) {

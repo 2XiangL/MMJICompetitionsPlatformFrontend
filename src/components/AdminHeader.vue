@@ -15,28 +15,12 @@
           class="nav-menu-desktop"
         >
           <el-menu-item index="/admin" @click="goToDashboard">仪表板</el-menu-item>
-          <el-menu-item index="/admin/users" @click="goToUsers">用户管理</el-menu-item>
           <el-menu-item index="/admin/competitions" @click="goToCompetitions">竞赛管理</el-menu-item>
           <el-menu-item index="/admin/teams" @click="goToTeams">团队管理</el-menu-item>
         </el-menu>
       </nav>
 
       <div class="header-right">
-        <el-dropdown @command="handleCommand">
-          <span class="user-info">
-            <el-avatar :size="32" :icon="UserFilled" />
-            <span class="username">{{ userStore.user?.real_name || userStore.user?.username }}</span>
-            <el-icon class="el-icon--right"><CaretBottom /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-              <el-dropdown-item command="settings">设置</el-dropdown-item>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
         <el-button
           type="primary"
           size="small"
@@ -64,19 +48,13 @@
       direction="rtl"
       size="280px"
     >
-      <el-menu :default-active="$route.path" @select="handleMobileMenuSelect">
+      <el-menu :default-active="$route.path">
         <el-menu-item index="/admin" @click="goToDashboard">仪表板</el-menu-item>
-        <el-menu-item index="/admin/users" @click="goToUsers">用户管理</el-menu-item>
         <el-menu-item index="/admin/competitions" @click="goToCompetitions">竞赛管理</el-menu-item>
         <el-menu-item index="/admin/teams" @click="goToTeams">团队管理</el-menu-item>
 
         <el-divider />
 
-        <el-menu-item index="profile">个人资料</el-menu-item>
-        <el-menu-item index="settings">设置</el-menu-item>
-        <el-menu-item index="logout">退出登录</el-menu-item>
-
-        <el-divider />
 
         <el-button
           type="primary"
@@ -94,21 +72,14 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { UserFilled, CaretBottom, Menu } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
+import { Menu } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const userStore = useUserStore()
 
 const mobileMenuVisible = ref(false)
 
 const goToDashboard = () => {
   router.push('/admin')
-  mobileMenuVisible.value = false
-}
-
-const goToUsers = () => {
-  router.push('/admin/users')
   mobileMenuVisible.value = false
 }
 
@@ -127,42 +98,6 @@ const goToFrontend = () => {
   mobileMenuVisible.value = false
 }
 
-const handleCommand = async (command) => {
-  switch (command) {
-    case 'profile':
-      ElMessage.info('个人资料功能开发中')
-      break
-    case 'settings':
-      ElMessage.info('设置功能开发中')
-      break
-    case 'logout':
-      try {
-        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        userStore.logout()
-        router.push('/admin/login')
-        ElMessage.success('已退出登录')
-      } catch {
-        // 用户取消
-      }
-      break
-  }
-}
-
-const handleMobileMenuSelect = (index) => {
-  mobileMenuVisible.value = false
-
-  if (index === 'profile') {
-    handleCommand('profile')
-  } else if (index === 'settings') {
-    handleCommand('settings')
-  } else if (index === 'logout') {
-    handleCommand('logout')
-  }
-}
 </script>
 
 <style scoped>
@@ -231,24 +166,6 @@ const handleMobileMenuSelect = (index) => {
   gap: 16px;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-}
-
-.user-info:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.username {
-  font-size: 0.9rem;
-  color: #bfcbd9;
-}
 
 .frontend-btn {
   margin-left: 8px;
@@ -264,9 +181,6 @@ const handleMobileMenuSelect = (index) => {
     display: none;
   }
 
-  .username {
-    display: none;
-  }
 
   .frontend-btn {
     display: none;

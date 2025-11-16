@@ -5,7 +5,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('adminToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -16,8 +16,7 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      localStorage.removeItem('adminToken')
       window.location.href = '/admin/login'
     }
     return Promise.reject(error)
@@ -31,17 +30,6 @@ export default {
     competitions: () => api.get('/stats/competitions'),
     teams: () => api.get('/stats/teams'),
     recentActivities: () => api.get('/activities/recent')
-  },
-
-  // 用户管理
-  users: {
-    getAll: (params) => api.get('/users', { params }),
-    create: (userData) => api.post('/users', userData),
-    update: (id, userData) => api.put(`/users/${id}`, userData),
-    updateAuth: (id, authStatus) => api.put(`/users/${id}/auth`, { auth_status: authStatus }),
-    delete: (id) => api.delete(`/users/${id}`),
-    batchUpdateAuth: (userIds, authStatus) => api.put('/users/batch-auth', { user_ids: userIds, auth_status: authStatus }),
-    batchDelete: (userIds) => api.delete('/users/batch', { data: { user_ids: userIds } })
   },
 
   // 竞赛管理
@@ -58,6 +46,12 @@ export default {
   teams: {
     getAll: (params) => api.get('/teams', { params }),
     delete: (id) => api.delete(`/teams/${id}`),
-    batchDelete: (teamIds) => api.delete('/teams/batch', { data: { team_ids: teamIds } })
+    batchDelete: (teamIds) => api.delete('/teams/batch', { data: { team_ids: teamIds } }),
+    // 组队审核
+    getPending: (params) => api.get('/teams/pending', { params }),
+    approve: (id) => api.put(`/teams/${id}/approve`),
+    reject: (id) => api.put(`/teams/${id}/reject`),
+    batchApprove: (teamIds) => api.put('/teams/batch-approve', { team_ids: teamIds }),
+    batchReject: (teamIds) => api.put('/teams/batch-reject', { team_ids: teamIds })
   }
 }
